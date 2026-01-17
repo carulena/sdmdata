@@ -58,8 +58,9 @@ def create_query(keys: list, country: str = None, year_range: tuple = None, lat_
     print(query)
     return query
 
+# TODO da pra filtrar os campos direto no download? 
 def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = None, lat_min: float = None, lat_max: float = None, lon_min: float = None, lon_max: float = None): # type: ignore
-    """Get occurrences from GBIF by specie name.
+    """Get occurrences from GBIF by taxon key.
 
     Args:
         keys (list): List of specie keys.
@@ -91,7 +92,7 @@ def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = 
         csv_name = zf.namelist()[0]
         df = pd.read_csv(zf.open(csv_name), sep="\t")
             
-    dataset = df[['datasetKey', 'species', 'scientificName', 'countryCode', 'decimalLatitude', 'decimalLongitude',
+    dataset = df[['species', 'scientificName', 'countryCode', 'decimalLatitude', 'decimalLongitude',
               'day', 'month', 'year']]
     dataset = dataset.drop_duplicates()
     
