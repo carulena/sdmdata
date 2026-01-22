@@ -1,10 +1,11 @@
 import glob
 import zipfile
+from dotenv import load_dotenv
 from pygbif import occurrences, species
 import pandas as pd
 import os.path
 
-    
+load_dotenv()
 def create_query(keys: list, country: str = None, year_range: tuple = None, lat_min: float = None, lat_max: float = None, lon_min: float = None, lon_max: float = None): # type: ignore
     """Create a GBIF query dictionary.
 
@@ -55,16 +56,15 @@ def create_query(keys: list, country: str = None, year_range: tuple = None, lat_
             "type": "within",
             "geometry": f"POLYGON(({lon_min} {lat_min}, {lon_min} {lat_max}, {lon_max} {lat_max}, {lon_max} {lat_min}, {lon_min} {lat_min}))"
         })
-    print(query)
     return query
 
 # TODO da pra filtrar os campos direto no download? 
-def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = None, lat_min: float = None, lat_max: float = None, lon_min: float = None, lon_max: float = None): # type: ignore
+def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = None, lat_min: float = None, lat_max: float = None, lon_min: float = None, lon_max: float = None):
     """Get occurrences from GBIF by taxon key.
 
     Args:
         keys (list): List of specie keys.
-        country (str, optional): Country code to filter occurrences. Defaults to None.
+        country (str, optional): Country to filter occurrences. Defaults to None.
         year_range (tuple, optional): Year range to filter occurrences (start_year, end_year). Defaults to None.
         """
     print(f"Downloading occurrences for taxonKey(s): {keys}")
@@ -73,13 +73,10 @@ def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = 
 
     res = occurrences.download(query)
 
-    print("Waiting for download to complete...")
     status = None
     while status != "SUCCEEDED":
         meta = occurrences.download_meta(res[0])
         status = meta["status"]
-        print(f"Current status: {status}")
-    print("Download completed. Fetching data...")
     
     directory = "gbif_download"
     if not os.path.exists(directory):
@@ -95,7 +92,16 @@ def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = 
     dataset = df[['species', 'scientificName', 'countryCode', 'decimalLatitude', 'decimalLongitude',
               'day', 'month', 'year']]
     dataset = dataset.drop_duplicates()
-    
+    dataset = dataset.rename(columns={
+        'scientificName': 'scientificName',
+        'countryCode': 'country',
+        'decimalLatitude': 'latitude',
+        'decimalLongitude': 'longitude',
+        'day': 'day',
+        'month': 'month',
+        'year': 'year'
+    })
+    dataset['source'] = 'gbif'
     return dataset
 
 def get_species_autocomplete(name: str):
@@ -106,6 +112,11 @@ def get_species_autocomplete(name: str):
         
     return species.name_suggest(q=name, rank="species", limit=10)
 
+def get_species_keys(specie_name: str):
+    res = species.name_suggest(q=specie_name, rank="species", limit=10)
+    if res:
+        return res[0]["key"]
+    return 
 
 def save_gbif_credentials(
     user: str,

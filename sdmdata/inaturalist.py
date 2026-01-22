@@ -9,7 +9,8 @@ def get_species_ids(species: list):
     results = []
     for name in species:
         res = pyinat.get_taxa(q=name, rank="species", per_page=1)
-        results.append({"name": name, "taxon_id": res['results'][0]['id']})
+        if res['results']:
+            results.append(res['results'][0]['id'])
         
     return results
 def get_place_id(name):
@@ -60,18 +61,11 @@ def get_observations_by_id(
     print(f"Downloading occurrences for taxon ID(s): {taxon_ids}")
     all_results = []
 
-    # Mapeamento simples ISO2 → place_id do iNat
-    COUNTRY_TO_PLACE_ID = {
-        "BR": 6878,
-        "US": 1,
-        "AR": 7198,
-        "FR": 6753
-    }
-
     for taxon_id in taxon_ids:
         params = {
             "taxon_id": taxon_id,
             "per_page": per_page,
+            "geo": True,
             "page": "all"
         }
 
@@ -95,23 +89,26 @@ def get_observations_by_id(
                 "nelng": lon_max
             })
 
+        print(params)
         res = pyinat.get_observations(**params)
 
         for obs in res["results"]:
-            if(not obs):
+            if(obs is None):
                 continue
-            date = obs.get("observed_on_details", {})
-            
-            all_results.append({
-                "taxon_id": taxon_id,
-                "species": obs.get("taxon", {}).get("name"),
-                "scientificName": obs.get("taxon", {}).get("preferred_common_name"),
-                "country": get_country_from_obs(obs),
-                "latitude": obs.get("geojson", {}).get("coordinates", [None, None])[1],
-                "longitude": obs.get("geojson", {}).get("coordinates", [None, None])[0],
-                "day": date.get("day"),
-                "month": date.get("month"),
-                "year": date.get("year")
-            })
+            else:
+                date = obs.get("observed_on_details", {})
+                if(date is None):
+                    date = obs.get("created_at_details", {})
+                
+                all_results.append({
+                    "source": 'inaturalist',
+                    "scientificName": obs.get("taxon", {}).get("preferred_common_name"),
+                    "country": get_country_from_obs(obs),
+                    "latitude": obs.get("geojson", {}).get("coordinates", [None, None])[1],
+                    "longitude": obs.get("geojson", {}).get("coordinates", [None, None])[0],
+                    "day": date.get("day"),
+                    "month": date.get("month"),
+                    "year": date.get("year")
+                })
 
     return all_results
