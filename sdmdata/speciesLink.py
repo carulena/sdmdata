@@ -29,6 +29,8 @@ def get_occurrences_by_name(species_names: list, country: str = None, year_range
 
     params["scientificname"] = ",".join(species_names)
     params["coordinates"] = "yes"
+    if(not apikey):
+        raise ValueError("SpeciesLink API key not found. Please set SPECIESLINK_APIKEY in your .env file.")
     params["apikey"] = apikey
     
     request = requests.get(url, params=params)
@@ -83,7 +85,7 @@ def save_specieslink_apikey(
 
     print("SpeciesLink API key saved to .env file.")
 
-def delete_specieslink_credentials(env_path: str = ".env"):
+def delete_specieslink_apikey(env_path: str = ".env"):
     """
     Removes SpeciesLink credentials from a .env file.
     """

@@ -1,11 +1,25 @@
 import glob
+import os
 import zipfile
 from dotenv import load_dotenv
 from pygbif import occurrences, species
 import pandas as pd
-import os.path
-
+import requests
 load_dotenv()
+
+def getCountryCode(country_name: str):
+    """Get country code from GBIF by country name.
+
+    Args:
+        country_name (str): Country name."""
+        
+    url = f"https://restcountries.com/v3.1/name/{country_name}"
+
+    response = requests.request("GET", url, headers={}, data={})
+    result = response.json()
+    
+    return result[0]['cca2']
+
 def create_query(keys: list, country: str = None, year_range: tuple = None, lat_min: float = None, lat_max: float = None, lon_min: float = None, lon_max: float = None): # type: ignore
     """Create a GBIF query dictionary.
 
@@ -34,10 +48,11 @@ def create_query(keys: list, country: str = None, year_range: tuple = None, lat_
         ]
     }
     if(country):
+        countryCode = getCountryCode(country)
         query["predicates"].append({
             "type": "equals",
             "key": "COUNTRY",
-            "value": country
+            "value": countryCode
         })
     if(year_range):
         query["predicates"].append({
@@ -89,9 +104,10 @@ def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = 
         csv_name = zf.namelist()[0]
         df = pd.read_csv(zf.open(csv_name), sep="\t")
             
-    dataset = df[['species', 'scientificName', 'countryCode', 'decimalLatitude', 'decimalLongitude',
+    dataset = df[['scientificName', 'countryCode', 'decimalLatitude', 'decimalLongitude',
               'day', 'month', 'year']]
     dataset = dataset.drop_duplicates()
+    dataset = dataset.dropna()
     dataset = dataset.rename(columns={
         'scientificName': 'scientificName',
         'countryCode': 'country',
@@ -102,8 +118,19 @@ def get_occurrences_by_key(keys: list, country: str = None, year_range: tuple = 
         'year': 'year'
     })
     dataset['source'] = 'gbif'
+    delete_file_if_exists()
     return dataset
 
+def delete_file_if_exists(directory: str = "gbif_download"):
+    """Delete a file if it exists.
+
+    Args:
+        file_path (str): Path to the file to be deleted.
+    """
+    files = glob.glob(f"{directory}/*")
+    for f in files:
+        os.remove(f)
+        
 def get_species_autocomplete(name: str):
     """Get species autocomplete from GBIF by name.
 

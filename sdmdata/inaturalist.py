@@ -58,7 +58,6 @@ def get_observations_by_id(
         lon_min (float, optional): Minimum longitude for bounding box. Defaults to None.
         lon_max (float, optional): Maximum longitude for bounding box. Defaults to None.
     """
-    print(f"Downloading occurrences for taxon ID(s): {taxon_ids}")
     all_results = []
 
     for taxon_id in taxon_ids:
@@ -89,7 +88,6 @@ def get_observations_by_id(
                 "nelng": lon_max
             })
 
-        print(params)
         res = pyinat.get_observations(**params)
 
         for obs in res["results"]:

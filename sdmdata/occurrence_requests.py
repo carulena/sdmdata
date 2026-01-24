@@ -1,3 +1,4 @@
+import os
 import sdmdata.inaturalist as inaturalist
 import sdmdata.gbif as gbif
 import sdmdata.speciesLink as speciesLink
@@ -88,9 +89,15 @@ def get_occurrences(
     )
     df_inat = pd.DataFrame(inat_data)
     df_specieslink = pd.DataFrame(specieslink_data)
-    
+
     df = pd.concat(
-        [df, df_inat, df_specieslink],
+        [gbif_data, df_inat, df_specieslink],
         ignore_index=True
     )
-    return gbif_data, inat_data, specieslink_data
+    
+    directory = "all_occurrences"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        
+    df.to_csv(f'{directory}/{str.join(", ", species_names)}.csv', index=False)
+    return "all occurrences saved to all_occurrences/all_occurrences.csv"

@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 testes_uso.ipynb
 gbif_download/*
+all_occurrences/*
