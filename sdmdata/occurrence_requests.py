@@ -11,8 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 def fetch_all(
     species_names: list,
-    gbif_keys: list,
-    inat_ids: list,
     country: str = None,
     year_range: tuple = None,
     lat_min: float = None,
@@ -20,6 +18,8 @@ def fetch_all(
     lon_min: float = None,
     lon_max: float = None
     ):
+    gbif_keys = gbif.get_species_keys(species_names)    
+    inat_ids = inaturalist.get_species_ids(species_names)
     
     with ThreadPoolExecutor(max_workers=3) as executor:
         f_gbif = executor.submit(
@@ -64,7 +64,6 @@ def fetch_all(
 
 def get_occurrences(
     species_names: list,
-    gbif_keys: list,
     country: str = None,
     year_range: tuple = None,
     lat_min: float = None,
@@ -72,14 +71,8 @@ def get_occurrences(
     lon_min: float = None,
     lon_max: float = None
 ):
-    inat_ids = inaturalist.get_species_ids(species_names)
-    print("Fetched species IDs.")
-    print(f"GBIF keys: {gbif_keys}")
-    print(f"iNaturalist IDs: {inat_ids}")
     gbif_data, inat_data, specieslink_data = fetch_all(
         species_names,
-        gbif_keys,
-        inat_ids,
         country,
         year_range,
         lat_min,

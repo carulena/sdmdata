@@ -139,11 +139,13 @@ def get_species_autocomplete(name: str):
         
     return species.name_suggest(q=name, rank="species", limit=10)
 
-def get_species_keys(specie_name: str):
-    res = species.name_suggest(q=specie_name, rank="species", limit=10)
-    if res:
-        return res[0]["key"]
-    return 
+def get_species_keys(species_names: list):
+    result = []
+    for name in species_names:
+        res = species.name_suggest(q=name, rank="species", limit=10)
+        if res:
+            result.append(res[0]["key"])
+    return result
 
 def save_gbif_credentials(
     user: str,
